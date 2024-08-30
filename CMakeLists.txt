@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.5.1)
 project(ros2)
 
+include(FetchContent)
+
 # Set C++ Standard
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -10,13 +12,26 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -g")
 # /include folder
 include_directories(${PROJECT_SOURCE_DIR}/include)
 
+
 add_library(${PROJECT_NAME} INTERFACE)
-# add_library(${PROJECT_NAME} SHARED
-    # src/node.cpp
-# )
 
-add_executable(sub examples/hello_world_subscription.cpp)
-add_executable(pub examples/hello_world_publisher.cpp)
+# Trivial Examples to
+add_executable(basic_mt examples/trivial/basic_multithreading.cpp)
+add_executable(client examples/trivial/client.cpp)
+add_executable(server examples/trivial/server.cpp)
 
-target_link_libraries(sub ${PROJECT_NAME})
-target_link_libraries(pub ${PROJECT_NAME})
+#Intra-process
+add_executable(hello_world_mt examples/hello_world_mt.cpp)
+add_executable(1000_component examples/1000_node_component.cpp)
+# Inter-process
+add_executable(hello_world_subscription examples/hello_world_subscription.cpp)
+add_executable(hello_world_publisher examples/hello_world_publisher.cpp)
+
+# target_link_libraries(${PROJECT_NAME} INTERFACE cppzmq)
+target_link_libraries(basic_mt ${PROJECT_NAME})
+target_link_libraries(client ${PROJECT_NAME})
+target_link_libraries(server ${PROJECT_NAME})
+target_link_libraries(hello_world_mt ${PROJECT_NAME})
+target_link_libraries(1000_component ${PROJECT_NAME})
+target_link_libraries(hello_world_subscription ${PROJECT_NAME})
+target_link_libraries(hello_world_publisher ${PROJECT_NAME})

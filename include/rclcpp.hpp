@@ -4,6 +4,8 @@
 #include <map>
 #include <queue>
 
+#include "executor.hpp"
+
 namespace rclcpp {
 
 void init(int argc, char** argv) {
@@ -14,7 +16,9 @@ void init(int argc, char** argv) {
 }
 
 void spin(std::shared_ptr<Node> node) {
-    node->spin();
+    MultithreadedExecutor executor;
+    executor.add_node(node);
+    executor.spin();
 }
 
 void shutdown() {

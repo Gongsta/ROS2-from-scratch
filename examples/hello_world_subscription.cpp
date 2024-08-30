@@ -7,6 +7,7 @@
 class HelloWorldSubscriber : public rclcpp::Node {
    public:
     HelloWorldSubscriber() : Node{"minimal_subscriber"} {
+        std::cout << "starting subscriber" << std::endl;
         auto subscription = this->create_subscription<std::string>(
             "sub_topic", 10, std::bind(&HelloWorldSubscriber::string_callback, this, std::placeholders::_1));
     }
