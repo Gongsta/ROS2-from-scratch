@@ -1,4 +1,5 @@
-
+#ifndef MESSAGE_QUEUE_HPP_
+#define MESSAGE_QUEUE_HPP_
 
 #include <condition_variable>
 #include <iostream>
@@ -32,3 +33,5 @@ class MessageQueue {
         return item;
     }
 };
+
+#endif

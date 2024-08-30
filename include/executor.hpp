@@ -1,3 +1,5 @@
+#ifndef EXECUTOR_HPP_
+#define EXECUTOR_HPP_
 
 #include <thread>
 
@@ -52,3 +54,5 @@ class MultithreadedExecutor {
 };
 
 }  // namespace rclcpp
+
+#endif

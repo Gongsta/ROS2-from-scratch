@@ -1,4 +1,3 @@
-
 #ifndef RMW_HPP_
 #define RMW_HPP_
 
