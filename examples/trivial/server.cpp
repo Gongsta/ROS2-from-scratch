@@ -12,6 +12,7 @@ using namespace std;
 int main() {
     // creating socket
     int serverSocket = socket(AF_INET, SOCK_STREAM, 0);
+    std::cout << serverSocket << std::endl;
 
     // specifying the address
     sockaddr_in serverAddress;
@@ -27,10 +28,9 @@ int main() {
     listen(serverSocket, 5);
 
     // accepting connection request
+    int clientSocket = accept(serverSocket, nullptr, nullptr);
     while (true) {
-        int clientSocket = accept(serverSocket, nullptr, nullptr);
-
-        // recieving data
+        // receiving data
         char buffer[1024] = {0};
         recv(clientSocket, buffer, sizeof(buffer), 0);
         cout << "Message from client: " << buffer

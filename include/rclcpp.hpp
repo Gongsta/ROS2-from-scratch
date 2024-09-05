@@ -9,14 +9,12 @@
 namespace rclcpp {
 
 void init(int argc, char** argv) {
-    // We need some sort of ROS master, so that we know how to synchronize between threads
-    // Need to do multiprocessing, or should i just do intraprocess for now?
-    // zerorpc
+    // Initialize some sort // Brocast the node over the next
     return;
 }
 
 void spin(std::shared_ptr<Node> node) {
-    MultithreadedExecutor executor;
+    SingleThreadedExecutor executor;
     executor.add_node(node);
     executor.spin();
 }

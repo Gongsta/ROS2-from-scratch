@@ -13,10 +13,15 @@ class MessageQueue {
     std::queue<T> m_queue;
     std::mutex m_mutex;
     std::condition_variable m_cond;
+    int queue_size;
 
    public:
+    MessageQueue(int queue_size) : queue_size{queue_size} {}
     void push(T item) {
         std::unique_lock<std::mutex> lock(m_mutex);
+        if (m_queue.size() >= queue_size) {
+            m_queue.pop();
+        }
         m_queue.push(item);
         m_cond.notify_one();
     }

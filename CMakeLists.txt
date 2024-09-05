@@ -17,6 +17,8 @@ add_library(${PROJECT_NAME} INTERFACE)
 
 # Trivial Examples to
 add_executable(basic_mt examples/trivial/basic_multithreading.cpp)
+# add_executable(publisher examples/trivial/publisher.cpp)
+# add_executable(subscription examples/trivial/subscription.cpp)
 add_executable(client examples/trivial/client.cpp)
 add_executable(server examples/trivial/server.cpp)
 
@@ -29,6 +31,8 @@ add_executable(hello_world_publisher examples/hello_world_publisher.cpp)
 
 # target_link_libraries(${PROJECT_NAME} INTERFACE cppzmq)
 target_link_libraries(basic_mt ${PROJECT_NAME})
+# target_link_libraries(publisher ${PROJECT_NAME})
+# target_link_libraries(subscription ${PROJECT_NAME})
 target_link_libraries(client ${PROJECT_NAME})
 target_link_libraries(server ${PROJECT_NAME})
 target_link_libraries(hello_world_mt ${PROJECT_NAME})

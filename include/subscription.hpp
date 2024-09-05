@@ -12,6 +12,8 @@ namespace rclcpp {
 // pure virtual base class
 class SubscriptionBase {
    public:
+    // const std::string topic_name;
+    std::string topic_name;
     virtual ~SubscriptionBase() = default;
     virtual void execute_callback() = 0;
 };
@@ -19,16 +21,17 @@ class SubscriptionBase {
 template <typename MessageType>
 class Subscription : public SubscriptionBase {
    private:
-    const std::string topic_name;
     std::function<void(MessageType)> callback;
 
    public:
-    std::shared_ptr<MessageQueue<MessageType>> message_queue;
-    std::mutex mut;
-    Subscription(std::string topic_name, std::function<void(MessageType)> callback) : topic_name{topic_name}, callback{callback}, message_queue{std::make_shared<MessageQueue<MessageType>>()} {};
+    std::shared_ptr<MessageQueue<MessageType>> message_queue;  // Populated with data by the RMW (see `rmw.hpp`)
+
+    Subscription(std::string topic_name, int queue_size, std::function<void(MessageType)> callback) : callback{callback}, message_queue{std::make_shared<MessageQueue<MessageType>>(queue_size)} {
+        this->topic_name = topic_name;
+    };
     ~Subscription() {};
     void execute_callback() {
-        auto message = message_queue->pop();  // blocking, using condition variable
+        auto message = message_queue->pop();  // Executor calls this
         this->callback(message);
     }
 };

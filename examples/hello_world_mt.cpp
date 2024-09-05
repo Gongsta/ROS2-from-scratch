@@ -22,7 +22,6 @@ class HelloWorldSubscriber : public rclcpp::Node {
    private:
     void string_callback(std::string str) {
         std::cout << "Received message: " << str << std::endl;
-        std::this_thread::sleep_for(std::chrono::milliseconds(500));
     }
 };
 
@@ -53,6 +52,8 @@ int main(int argc, char** argv) {
     rclcpp::init(argc, argv);
     auto node_ptr = std::make_shared<HelloWorldPublisher>();    // initialise node pointer
     auto node2_ptr = std::make_shared<HelloWorldSubscriber>();  // initialise node pointer
+    // Play around with both
+    // rclcpp::SingleThreadedExecutor executor;
     rclcpp::MultithreadedExecutor executor;
     executor.add_node(node_ptr);
     executor.add_node(node2_ptr);

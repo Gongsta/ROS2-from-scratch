@@ -5,13 +5,12 @@
 #include <vector>
 
 #include "publisher.hpp"
-#include "rmw.hpp"
 #include "subscription.hpp"
 #include "timer.hpp"
 
 namespace rclcpp {
 
-class Node {
+class Node : public std::enable_shared_from_this<Node> {
    public:
     const std::string name;
     std::vector<std::shared_ptr<SubscriptionBase>> subscriptions;
@@ -20,9 +19,9 @@ class Node {
     Node(const std::string& name) : name{name} {}
     template <typename MessageType>
     std::shared_ptr<Subscription<MessageType>> create_subscription(std::string topic_name, int queue_size, std::function<void(MessageType)> callback) {
-        std::shared_ptr<Subscription<MessageType>> s = std::make_shared<Subscription<MessageType>>(topic_name, callback);
+        std::shared_ptr<Subscription<MessageType>> s = std::make_shared<Subscription<MessageType>>(topic_name, queue_size, callback);
         this->subscriptions.push_back(s);
-        RMW::register_subscription(topic_name, s);
+        // RMW::register_subscription(topic_name, s); // Registration done through the executor
         return s;
     }
 
