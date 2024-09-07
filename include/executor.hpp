@@ -1,6 +1,7 @@
 #ifndef EXECUTOR_HPP_
 #define EXECUTOR_HPP_
 
+#include <any>
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -10,8 +11,7 @@
 
 namespace rclcpp {
 /*
-Each executor maintains an event queue. Events are node-agnostic.
-
+Each executor maintains an event queue that stores pointers to subscriptions that have new data coming in.
 */
 
 class SingleThreadedExecutor : public ExecutorBase {
@@ -20,9 +20,7 @@ class SingleThreadedExecutor : public ExecutorBase {
 
    public:
     SingleThreadedExecutor() {
-        // Timers should be internally managed
         main_thread = std::thread{
-            // TODO: Timer doesn't work anymore here
             [&]() {
                 while (true) {
                     // Iterate over timers, make sure to call the ones that need to be called
@@ -34,15 +32,15 @@ class SingleThreadedExecutor : public ExecutorBase {
                         }
                     }
 
-                    std::unique_lock lock(event_mutex);
-                    auto next_wake_up = now + std::chrono::hours(24);  // Set a far future time initially
+                    auto next_wake_up = now + std::chrono::hours(24);
                     for (auto timer : timers) {
                         next_wake_up = min(next_wake_up, timer->next_wake_up);
                     }
 
+                    std::unique_lock lock(event_mutex);
                     cv.wait_until(lock, next_wake_up, [&] { return !event_queue.empty(); });
 
-                    if (!event_queue.empty()) {
+                    while (!event_queue.empty()) {
                         auto subscription = event_queue.front();
                         event_queue.pop();
                         subscription->execute_callback();
@@ -53,8 +51,11 @@ class SingleThreadedExecutor : public ExecutorBase {
     void add_node(std::shared_ptr<Node> node) {
         // register the nodes subscriptions with the RMW
         for (auto sub : node->subscriptions) {
-            RMW::register_subscription(sub, std::bind(&SingleThreadedExecutor::notify, this, std::placeholders::_1));
+            std::string memory_map = RMW::register_subscription(sub, std::bind(&SingleThreadedExecutor::notify, this, std::placeholders::_1));
+            ipc_table[memory_map] = sub;
+            this->subscriptions.push_back(sub);
         }
+
         for (auto timer : node->timers) {
             timers.push_back(timer);
         }
@@ -67,6 +68,12 @@ class SingleThreadedExecutor : public ExecutorBase {
     }
 
     void spin() {
+        std::thread ipc{[this]() {
+            while (true) {
+                update_ipc_queues();
+            }
+        }};
+        ipc.join();
         main_thread.join();
     }
 };
@@ -84,6 +91,7 @@ class MultithreadedExecutor : public ExecutorBase {
     void add_node(std::shared_ptr<Node> node) {
         for (auto sub : node->subscriptions) {
             RMW::register_subscription(sub, std::bind(&MultithreadedExecutor::notify, this, std::placeholders::_1));
+            this->subscriptions.push_back(sub);
         }
 
         for (auto sub : node->subscriptions) {
@@ -101,8 +109,13 @@ class MultithreadedExecutor : public ExecutorBase {
                 }
             }});
         }
+        // Busy thread that checks shared memory. TODO: Change to event-driven
+        threads.push_back(std::thread{[this]() {
+            while (true) {
+                update_ipc_queues();
+            }
+        }});
     }
-
     void spin() {
         for (auto& thread : threads) {
             thread.join();

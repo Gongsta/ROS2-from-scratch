@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
     // rclcpp::SingleThreadedExecutor executor;
     rclcpp::MultithreadedExecutor executor;
     executor.add_node(node_ptr);
-    executor.add_node(node2_ptr);
+    executor.add_node(node2_ptr);  // Try commenting this out
     executor.spin();
     rclcpp::shutdown();
     return 0;

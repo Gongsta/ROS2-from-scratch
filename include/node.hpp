@@ -21,7 +21,7 @@ class Node : public std::enable_shared_from_this<Node> {
     std::shared_ptr<Subscription<MessageType>> create_subscription(std::string topic_name, int queue_size, std::function<void(MessageType)> callback) {
         std::shared_ptr<Subscription<MessageType>> s = std::make_shared<Subscription<MessageType>>(topic_name, queue_size, callback);
         this->subscriptions.push_back(s);
-        // RMW::register_subscription(topic_name, s); // Registration done through the executor
+        // RMW::register_subscription(topic_name, s); // Registration with RMW done through the executor
         return s;
     }
 
