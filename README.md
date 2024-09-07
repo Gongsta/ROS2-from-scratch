@@ -7,27 +7,30 @@ A header-only implementation of [Robot Operating System (ROS2)](https://docs.ros
 - A base `rclcpp::Node` class that enables *pub-sub communication* via `this->create_publisher` and `this->create_subscription` methods
 - Event-driven architecture using `std::condition_variable`s on thread-safe queues (`MessageQueue`) to enable efficient execution of callbacks in a multithreaded environment
     - Flexible executors (`SingleThreadedExecutor` and `MultithreadedExecutor`) that can schedule multiple nodes in the same process
-- Flexible inter-process (multiprocessing) and intra-process (multithreading) capabilities for execution of `rclcpp::Node`s
 - Inter-process communication between nodes via shared memory using `Boost.Interprocess`
     - Note that because we are using shared memory, I don't IPC between different machines (no socket programming)
     - However, we get the benefit of really good performance thanks to zero-copy data transfer / no serialization
 
 
-Concepts that are covered
+**Concepts that are explored through this project**:
+- Concurrency: Mutex, locks, condition variables, semaphores
 - Process vs. thread (intra-process vs. inter-process comms)
     - Choosing to multithread by default as opposed to multiprocess to minimize overhead
-- Queue sizes
-- Callbacks, deadlocks
+- Callbacks, `std::function` and `std::bind`
+- Smart pointers (`unique_ptr`, `shared_ptr`)
 - Thread-safe queues for sending messages
-- Because nodes are all in the same process, serialization is not implemented. Message IDL (serialization) (Why do we need to use ROSIDL?? Can't we just define a class and send it over?).
+- Template programming
+- IPC mechanisms: Sockets, Shared Memory, Pipes
+- Message serialization (even though it's not implemented)
 
-What isn't implemented:
-- Even more efficient intra-process comms through zero-copy data transfer (see (https://docs.ros.org/en/eloquent/Tutorials/Intra-Process-Communication.html)[here])
-- Quality of Service
+**What isn't implemented**:
+- More efficient event-driven architecture for IPC mechanism (difficult in implementation)
+- Even more efficient intra-process comms through zero-copy data transfer (see [here](https://docs.ros.org/en/eloquent/Tutorials/Intra-Process-Communication.html))
+- Quality of Service (QoS) -> UDP vs. TCP, since I'm not using sockets
 - Callback groups
-- Type Adaptation (bring up experience using this NVIDIA)
-- ROS Services
-- rest of ROS 2 features
+- [Type Adaptation](https://ros.org/reps/rep-2007.html) (not needed since we're using shared memory)
+- ROS Services (RPC)
+- Rest of ROS 2 features...
 
 Todo:
 - Overloaded callbacks to enable **zero-copy** data transfer between nodes via `std::unique_ptr` with `std::move` semantics

@@ -1,7 +1,6 @@
-
 /*
 Middleware that you can think of as a message broker / lookup table for subscribers. Works
-for both intra-process and intra-process.
+for both intra-process and inter-process communication.
 */
 #ifndef RMW_HPP_
 #define RMW_HPP_
@@ -31,11 +30,10 @@ void publish_message(std::string topic_name, T msg) {
     if (inprocess_subscription_table.count(topic_name)) {
         std::cout << "Found " << inprocess_subscription_table[topic_name].size() << " inprocess subscribers for topic " << topic_name << std::endl;
         for (auto sub : inprocess_subscription_table[topic_name]) {
-            // Executor associated with subscription is notified of an event.
             auto casted_sub = std::dynamic_pointer_cast<Subscription<T>>(sub);
             if (casted_sub) {
                 casted_sub->message_queue->push(msg);
-                // notify the executor that a new message arrived
+                // notify the executor that a new message arrived (event-driven architecture)
                 subscription_executor_table[sub](sub);
             } else {
                 std::cerr << "Error casting" << std::endl;
@@ -43,9 +41,8 @@ void publish_message(std::string topic_name, T msg) {
         }
     }
     /* --- INTER-PROCESS MESSAGE PASSING --- */
-    // Each subscription will be associated with a shared memory queue. The publisher
-    // Merely publishes to the shared memory queue. Since the publisher cannot see the
-    // the subscription, the subscriber will need to be notified. Executor's job again
+    // Each subscription will own a shared memory queue. The publisher
+    // publishes to the associated shared memory queue.
     managed_shared_memory segment(open_or_create, "shared_message_queue_table", 65536);
     MessageQueueTable mq_table(segment);
     scoped_lock<interprocess_mutex> lock(mq_table.mutex);
@@ -71,11 +68,11 @@ void publish_message(std::string topic_name, T msg) {
 }
 
 std::string register_subscription(std::shared_ptr<SubscriptionBase> subscription, std::function<void(std::shared_ptr<SubscriptionBase>)> notify) {
-    // --- Inprocess ---
+    // --- INTRA-PROCESS registration (local hash map) ---
     inprocess_subscription_table[subscription->topic_name].push_back(subscription);
     subscription_executor_table[subscription] = notify;
 
-    // --- Outprocess ---
+    // --- INTER-PROCESS registration (shared hash map) ---
     std::string region_name = subscription->register_ipc();
     return region_name;
 }

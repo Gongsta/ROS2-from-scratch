@@ -28,35 +28,34 @@ class SubscriptionBase {
 template <typename MessageType>
 class Subscription : public SubscriptionBase {
    private:
-    std::function<void(MessageType)> callback;
-    std::string memory_region;
+    std::function<void(MessageType)> callback_;
+    std::string memory_region_;
 
    public:
     std::shared_ptr<MessageQueue<MessageType>> message_queue;  // Populated with data by the RMW (see `rmw.hpp`)
 
-    Subscription(std::string topic_name, int queue_size, std::function<void(MessageType)> callback) : callback{callback}, message_queue{std::make_shared<MessageQueue<MessageType>>(queue_size)} {
+    Subscription(std::string topic_name, int queue_size, std::function<void(MessageType)> callback) : callback_{callback}, message_queue{std::make_shared<MessageQueue<MessageType>>(queue_size)} {
         this->topic_name = topic_name;
     };
     ~Subscription() {};
-    void execute_callback() {
-        auto message = message_queue->pop();  // Executor calls this
-        this->callback(message);
+    void execute_callback() {  // Executor calls this
+        auto message = message_queue->pop();
+        this->callback_(message);
     }
 
-    // I want to put this code in RMW, but I can't because of dynamic typing...
+    // Ideally put this in rmw.hpp, but couldn't figure out a way due to missing type (I use SubscriptionBase)
     std::string register_ipc() {
+        // Lookup IPC table
         managed_shared_memory segment(open_or_create, "shared_message_queue_table", 65536);
         MessageQueueTable mq_table(segment);
         scoped_lock<interprocess_mutex> lock(mq_table.mutex);
 
-        // Allocate a new queue
+        // Allocate a new shared memory queue
         std::string region_name = generate_unique_shared_memory_segment();
         managed_shared_memory queue_segment(create_only, region_name.c_str(), 65536);
         memory_region = region_name;
-
         boost::interprocess::allocator<MessageType, segment_manager_t> alloc_inst(queue_segment.get_segment_manager());
 
-        // Construct the shared memory buffer in shared memory
         int buffer_size = 10;  // Maximum size of the queue
         queue_segment.construct<SharedMessageQueue<MessageType>>("Buffer")(alloc_inst, buffer_size);
         std::vector<std::string> memory_region_names;
@@ -67,7 +66,6 @@ class Subscription : public SubscriptionBase {
             }
         }
         memory_region_names.push_back(region_name);
-        // Insert or update a topic and its associated vector of memory region names into the table
         mq_table.insert_or_update(this->topic_name, memory_region_names, segment);
         return region_name;
     }

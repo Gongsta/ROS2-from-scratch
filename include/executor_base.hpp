@@ -18,6 +18,8 @@ class ExecutorBase : public std::enable_shared_from_this<ExecutorBase> {
 
    public:
     virtual void notify(std::shared_ptr<SubscriptionBase> sub) = 0;
+
+    // A function excuted by a custom thread to periodically check for new data.
     void update_ipc_queues() {
         std::unique_lock lock(event_mutex);
         for (auto x : ipc_table) {
